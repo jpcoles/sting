@@ -4,7 +4,7 @@ LDFLAGS=
 
 all: sting
 
-sting: sting.o ic.o fg.o log.o
+sting: sting.o ic.o fg.o log.o darwin.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
 sting.o: sting.c sting.h
@@ -17,6 +17,9 @@ fg.o: fg.c fg.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 log.o: log.c log.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+darwin.o: darwin.c darwin.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:

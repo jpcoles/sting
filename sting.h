@@ -3,6 +3,12 @@
 
 #include <stdio.h>
 
+struct delta
+{
+    double rx,ry;
+    double px,py;
+};
+
 struct particle
 {
     double rx,ry;       // Position
@@ -15,6 +21,8 @@ struct env
 {
     int N;              // Number of particles
     struct particle *p; // Particle list
+    struct particle *np;// Particle list with updated pos/momentum
+    struct delta    *d;
 
     float M;            // Mass of the central object
     float dt;           // Time step

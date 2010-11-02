@@ -10,8 +10,9 @@ axis('equal')
 X = []
 Y = []
 l, = plot(X,Y, 'k,')
-xlim(-1.5,1.5)
-ylim(-1.5,1.5)
+S = 1
+xlim(-1.5*S,1.5*S)
+ylim(-1.5*S,1.5*S)
 
 while True:
     p = sys.stdin.readline()
@@ -21,7 +22,7 @@ while True:
     if not p:
         l.set_data(X,Y)
         draw()
-        sleep(0.01)
+        sleep(0.001)
 #        X,Y = [],[]
     else:
         try:
