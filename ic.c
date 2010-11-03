@@ -26,6 +26,41 @@ int ic_2_particle_simple(struct env *env)
     return 0;
 }
 
+int ic_4_particle_simple(struct env *env)
+{
+    assert(env->N == 4);
+
+    env->p[0].rx = 1;
+    env->p[0].ry = 1;
+    env->p[0].px = 0;
+    env->p[0].py = 0;
+    env->p[0].m  = 1.0;
+    env->p[0].q  = -1.0;
+
+    env->p[1].rx = -1;
+    env->p[1].ry = 1;
+    env->p[1].px = 0;
+    env->p[1].py = 0;
+    env->p[1].m  = 1.0;
+    env->p[1].q  = -1.0;
+
+    env->p[2].rx = 1;
+    env->p[2].ry = -1;
+    env->p[2].px = 0;
+    env->p[2].py = 0;
+    env->p[2].m  = 1.0;
+    env->p[2].q  = -1.0;
+
+    env->p[3].rx = -1;
+    env->p[3].ry = -1;
+    env->p[3].px = 0;
+    env->p[3].py = 0;
+    env->p[3].m  = 1.0;
+    env->p[3].q  = -1.0;
+
+    return 0;
+}
+
 int ic_random_circular(struct env *env)
 {
     int i;

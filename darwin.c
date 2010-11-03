@@ -15,31 +15,24 @@ inline double dHdr(double mag2, double r, double m)
 }
 #endif
 
-int darwin_step(struct env *env)
+int Hintegrator(struct env *env, struct particle *p, struct delta *d)
 {
-    int i,j, iter;
-
-    struct particle *p  = env->p;
-    struct particle *np = env->np;
-    struct delta    *d  = env->d;
-
+    int i,j;
     double pmag2;
     double dx, dy, r2, r;
     double dHdrx, dHdry;
 
-    memset(d, 0, sizeof(*env->d) * env->N);
-
-    //--------------------------------------------------------------------------
+    memset(d, 0, sizeof(*d) * env->N);
 
     for (i=0; i < env->N; i++)
     {
         pmag2 = pow(p[i].px,2) + pow(p[i].py,2);
 
-        //d[i].rx = 0.5 * env->dt * p[i].px / p[i].m;
-        //d[i].ry = 0.5 * env->dt * p[i].py / p[i].m;
+        d[i].rx = 0.5 * env->dt * p[i].px / p[i].m;
+        d[i].ry = 0.5 * env->dt * p[i].py / p[i].m;
 
-        d[i].rx = 0.5 * env->dt * dHdp(pmag2, p[i].rx, p[i].m);
-        d[i].ry = 0.5 * env->dt * dHdp(pmag2, p[i].ry, p[i].m);
+        //d[i].rx = 0.5 * env->dt * dHdp(pmag2, p[i].rx, p[i].m);
+        //d[i].ry = 0.5 * env->dt * dHdp(pmag2, p[i].ry, p[i].m);
 
         for (j=i+1; j < env->N; j++)
         {
@@ -61,7 +54,21 @@ int darwin_step(struct env *env)
         //fprintf(stderr, "!! %i %f %f\n", i, d[i].px, d[i].py);
     }
 
+}
+
+int darwin_step(struct env *env)
+{
+    int i,j, iter;
+
+    struct particle *p  = env->p;
+    struct particle *np = env->np;
+    struct delta    *d  = env->d;
+
+    memcpy(np, p, sizeof(*np) * env->N);
+
     //--------------------------------------------------------------------------
+
+    Hintegrator(env, p, d);
 
 #if 1
     for (iter=0; iter < 10; iter++)
@@ -74,39 +81,10 @@ int darwin_step(struct env *env)
             np[i].py = p[i].py + 0.5 * d[i].py;
         }
 
-        memset(d, 0, sizeof(*env->d) * env->N);
-
-        for (i=0; i < env->N; i++)
-        {
-            pmag2 = pow(np[i].px,2) + pow(np[i].py,2);
-
-            //d[i].rx = 0.5 * env->dt * np[i].px / p[i].m;
-            //d[i].ry = 0.5 * env->dt * np[i].py / p[i].m;
-
-            d[i].rx = 0.5 * env->dt * dHdp(pmag2, np[i].rx, p[i].m);
-            d[i].ry = 0.5 * env->dt * dHdp(pmag2, np[i].ry, p[i].m);
-
-            for (j=i+1; j < env->N; j++)
-            {
-                dx = np[i].rx - np[j].rx;
-                dy = np[i].ry - np[j].ry;
-                r2 = pow(dx, 2) + pow(dy, 2);
-                r  = sqrt(r2);
-
-                dHdrx = p[i].q * p[j].q * dx / (r2*r);
-                dHdry = p[i].q * p[j].q * dy / (r2*r);
-
-                d[i].px += 0.5 * env->dt * dHdrx;
-                d[i].py += 0.5 * env->dt * dHdry;
-
-                d[j].px -= 0.5 * env->dt * dHdrx;
-                d[j].py -= 0.5 * env->dt * dHdry;
-            }
-        }
+        Hintegrator(env, np, d);
 
         fprintf(stderr, "% 20.15f % 20.15f  % 20.15f  % 20.15f \n", d[0].rx, d[0].ry, d[0].px, d[0].py);
     }
-
 #endif
 
     for (i=0; i < env->N; i++)

@@ -10,7 +10,7 @@ axis('equal')
 X = []
 Y = []
 l, = plot(X,Y, 'k,')
-S = 1
+S = 10
 xlim(-1.5*S,1.5*S)
 ylim(-1.5*S,1.5*S)
 

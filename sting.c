@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 
     env.N = 0;
     env.Rmin = 0.1;
-    env.Rmax = 1.0;
+    env.Rmax = 10.0;
     env.M = 100;
     env.T = 20;
     env.dt = 0.01;
@@ -100,7 +100,8 @@ int main(int argc, char **argv)
     env.np = malloc(env.N * sizeof(*env.np)); assert(env.np != NULL);
     env.d  = malloc(env.N * sizeof(*env.d));  assert(env.d  != NULL);
     //ic_2_particle_simple(&env);
-    ic_random_circular(&env);
+    ic_4_particle_simple(&env);
+    //ic_random_circular(&env);
     //ic_random_elliptic(&env);
 
     //--------------------------------------------------------------------------
@@ -116,11 +117,11 @@ int main(int argc, char **argv)
     {
         env.t = step * env.dt;
 
-        for (i=0; i < env.N; i++) fg(env.M, &env.p[i], env.dt/2);
+        //for (i=0; i < env.N; i++) fg(env.M, &env.p[i], env.dt/2);
 
         darwin_step(&env);
 
-        for (i=0; i < env.N; i++) fg(env.M, &env.p[i], env.dt/2);
+        //for (i=0; i < env.N; i++) fg(env.M, &env.p[i], env.dt/2);
 
         for (i=0; i < env.N; i++)
             printf("%i] %f %f %f %f %f\n", i, env.p[i].rx, env.p[i].ry, env.p[i].px, env.p[i].py, env.p[i].q);
