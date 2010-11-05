@@ -29,8 +29,8 @@ int main(int argc, char **argv)
     env.Rmin = 0.1;
     env.Rmax = 10.0;
     env.M = 100;
-    env.T = 20;
-    env.dt = 0.01;
+    env.T = 2000;
+    env.dt = 0.001;
 
     //--------------------------------------------------------------------------
     // Read command line arguments
@@ -100,9 +100,9 @@ int main(int argc, char **argv)
     env.np = malloc(env.N * sizeof(*env.np)); assert(env.np != NULL);
     env.d  = malloc(env.N * sizeof(*env.d));  assert(env.d  != NULL);
     //ic_2_particle_simple(&env);
-    ic_4_particle_simple(&env);
+    //ic_4_particle_simple(&env);
     //ic_random_circular(&env);
-    //ic_random_elliptic(&env);
+    ic_random_elliptic(&env);
 
     //--------------------------------------------------------------------------
     // During the interation loop, we will count the number of steps rather
@@ -111,20 +111,31 @@ int main(int argc, char **argv)
     //--------------------------------------------------------------------------
     int nsteps = ceil(env.T / env.dt);
     int step;
-    int i;
+    int i,j;
 
     for (step = 0; step < nsteps; step++)
     {
         env.t = step * env.dt;
-
-        //for (i=0; i < env.N; i++) fg(env.M, &env.p[i], env.dt/2);
+        for (i=0; i < env.N; i++) fg(env.M, &env.p[i], env.dt/2);
 
         darwin_step(&env);
 
-        //for (i=0; i < env.N; i++) fg(env.M, &env.p[i], env.dt/2);
+        env.Etot = 0.0;
+        for (i=0; i < env.N; i++) 
+        {
+            fprintf(stderr, "&$&$$$ %i %f %f %f %f \n", i, env.p[i].rx, env.p[i].ry, env.p[i].px, env.p[i].py); 
+            fg(env.M, &env.p[i], env.dt/2);
+            fprintf(stderr, "$$ %i %f %f %f %f \n", i, env.p[i].rx, env.p[i].ry, env.p[i].px, env.p[i].py); 
+            env.Etot += - env.M*env.p[i].m/(hypot(env.p[i].rx,env.p[i].ry)) + (pow(env.p[i].px,2) + pow(env.p[i].py,2))/(2.0*env.p[i].m); 
+
+            for (j=i+1; j < env.N; j++)
+            {   
+                env.Etot += env.p[i].q * env.p[j].q / hypot(env.p[i].rx-env.p[j].rx, env.p[i].ry - env.p[j].ry);
+            }
+        }
 
         for (i=0; i < env.N; i++)
-            printf("%i] %f %f %f %f %f\n", i, env.p[i].rx, env.p[i].ry, env.p[i].px, env.p[i].py, env.p[i].q);
+            printf("%i %f %f %f %f %f %f\n", i, env.p[i].rx, env.p[i].ry, env.p[i].px, env.p[i].py, env.p[i].q, env.Etot);
         printf("\n");
 
 

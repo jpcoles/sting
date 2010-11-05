@@ -31,6 +31,7 @@ struct env
 
     float t;            // Current simulation time
     float T;            // Total simulation time
+    float Etot;         // Total energy
 };
 
 //------------------------------------------------------------------------------

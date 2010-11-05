@@ -33,6 +33,8 @@ void fg(double mu, struct particle *p, double dt)
     dt -= ((int) (nf * dt)) / nf;
     dm = en * dt - es;
 
+    fprintf(stderr, "%f %f %f %f %f %f \n", a, r, 2/r, vsq, mu, vsq/mu);
+
     if ((es * cos(dm) + ec * sin(dm)) > 0)
         dec = dm + 0.85 * e;
     else
@@ -40,6 +42,7 @@ void fg(double mu, struct particle *p, double dt)
 
     lo = -2 * M_PI;
     up = 2 * M_PI;
+
     for (iter = 1; iter <= 32; iter++) 
     {
         s = sin(dec);

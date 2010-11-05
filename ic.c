@@ -81,18 +81,18 @@ int ic_random_circular(struct env *env)
         //-----------------------------------------------------------------------------
         double v = sqrt(env->M / r);
 
+        env->p[i].m = 1.0;
+
         double px = 0;
-        double py = v;
+        double py = env->p[i].m*v;
 
-        env->p[i].m = 0.70;
-
-        env->p[i].px = env->p[i].m * (px*cos(theta) - py*sin(theta));
-        env->p[i].py = env->p[i].m * (px*sin(theta) + py*cos(theta));
+        env->p[i].px = (px*cos(theta) - py*sin(theta));
+        env->p[i].py = (px*sin(theta) + py*cos(theta));
 
         //-----------------------------------------------------------------------------
         // Assign a random charge (-1/+1)
         //-----------------------------------------------------------------------------
-        env->p[i].q = (drand48() > 0.5) * 2 - 1;
+        env->p[i].q = 10.0*((drand48() > 0.5) * 2 - 1);
     }
 
     return 0;
@@ -129,7 +129,7 @@ int ic_random_elliptic(struct env *env)
         //-----------------------------------------------------------------------------
         // Assign a random charge (-1/+1)
         //-----------------------------------------------------------------------------
-        env->p[i].q = (drand48() > 0.5) * 2 - 1;
+        env->p[i].q = 10.0*((drand48() > 0.5) * 2 - 1);
     }
 
     return 0;
