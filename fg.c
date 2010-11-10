@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include "sting.h"
@@ -24,6 +25,8 @@ void fg(double mu, struct particle *p, double dt)
     u = p->rx * p->px + p->ry * p->py;
 
     a = 1 / (2 / r - vsq / mu);
+    assert(a > 0);
+
     en = sqrt(mu / (a * a * a));
     ec = 1 - r / a;
     es = u / (en * a * a);
@@ -33,7 +36,7 @@ void fg(double mu, struct particle *p, double dt)
     dt -= ((int) (nf * dt)) / nf;
     dm = en * dt - es;
 
-    fprintf(stderr, "%f %f %f %f %f %f \n", a, r, 2/r, vsq, mu, vsq/mu);
+    //fprintf(stderr, "FG: %f %f %f %f %f %f \n", a, r, 2/r, vsq, mu, vsq/mu);
 
     if ((es * cos(dm) + ec * sin(dm)) > 0)
         dec = dm + 0.85 * e;

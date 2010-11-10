@@ -21,16 +21,71 @@ void help()
     exit(2);
 }
 
+double energy(struct env *env)
+{
+    int i,j;
+
+    double E = 0.0;
+    double C, D=0;
+    double Ceps2 = env->Coulomb_eps2;
+
+    for (i=0; i < env->N; i++) 
+    {
+#if WITH_FG || WITH_CENTER_MASS
+        E += -env->M / hypot(env->p[i].rx,env->p[i].ry);
+#endif
+
+        E += (pow(env->p[i].px,2) + pow(env->p[i].py,2)) / (2*env->p[i].m); 
+
+        for (j=i+1; j < env->N; j++)
+        {   
+            double dx = env->p[i].rx - env->p[j].rx;
+            double dy = env->p[i].ry - env->p[j].ry;
+
+            double r2 = Ceps2 + dx*dx + dy*dy;
+
+            C = env->p[i].q * env->p[j].q / sqrt(r2);
+#if WITH_DARWIN
+            D = env->p[i].px * env->p[j].px + env->p[i].py * env->p[j].py 
+              + (env->p[i].px * dx - env->p[i].py * dy) * (env->p[j].px * dx - env->p[j].py * dy) / r2;
+            D /= (2 * env->p[i].m * env->p[j].m * pow(env->c,2));
+#endif
+
+            E += C * (1-D);
+
+        }
+    }
+
+    return E;
+}
+
+inline void drift(struct env *env, double dt)
+{
+    int i;
+#if WITH_FG
+    for (i=0; i < env->N; i++) 
+        fg(env->M, &env->p[i], dt);
+#else
+    for (i=0; i < env->N; i++) 
+    {
+        env->p[i].rx += dt * env->p[i].px / env->p[i].m;
+        env->p[i].ry += dt * env->p[i].py / env->p[i].m;
+    }
+#endif
+}
+
 int main(int argc, char **argv)
 {
     struct env env;
 
     env.N = 0;
-    env.Rmin = 0.1;
+    env.Rmin = 3.0;
     env.Rmax = 10.0;
     env.M = 100;
-    env.T = 2000;
-    env.dt = 0.001;
+    env.T = 200.;
+    env.dt = 0.01;
+    env.Coulomb_eps2 = 0.1;
+    env.c = 1000;
 
     //--------------------------------------------------------------------------
     // Read command line arguments
@@ -101,8 +156,8 @@ int main(int argc, char **argv)
     env.d  = malloc(env.N * sizeof(*env.d));  assert(env.d  != NULL);
     //ic_2_particle_simple(&env);
     //ic_4_particle_simple(&env);
-    //ic_random_circular(&env);
-    ic_random_elliptic(&env);
+    ic_random_circular(&env);
+    //ic_random_elliptic(&env);
 
     //--------------------------------------------------------------------------
     // During the interation loop, we will count the number of steps rather
@@ -113,31 +168,26 @@ int main(int argc, char **argv)
     int step;
     int i,j;
 
+    fprintf(stderr, "eps2 = %f\n", env.Coulomb_eps2);
     for (step = 0; step < nsteps; step++)
     {
         env.t = step * env.dt;
-        for (i=0; i < env.N; i++) fg(env.M, &env.p[i], env.dt/2);
+
+        env.Etot = energy(&env);
+        for (i=0; i < env.N; i++)
+        {
+            double J = env.p[i].rx * env.p[i].py - env.p[i].ry * env.p[i].px;
+            printf("%i %i %f %f %f %f %f %f %f\n", step, i, env.p[i].rx, env.p[i].ry, env.p[i].px, env.p[i].py, env.p[i].q, env.Etot, J);
+        }
+        printf("\n");
+        //fprintf(stderr, "%f\n", env.Etot);
+
+        drift(&env, env.dt/2);
 
         darwin_step(&env);
+        darwin_step(&env);
 
-        env.Etot = 0.0;
-        for (i=0; i < env.N; i++) 
-        {
-            fprintf(stderr, "&$&$$$ %i %f %f %f %f \n", i, env.p[i].rx, env.p[i].ry, env.p[i].px, env.p[i].py); 
-            fg(env.M, &env.p[i], env.dt/2);
-            fprintf(stderr, "$$ %i %f %f %f %f \n", i, env.p[i].rx, env.p[i].ry, env.p[i].px, env.p[i].py); 
-            env.Etot += - env.M*env.p[i].m/(hypot(env.p[i].rx,env.p[i].ry)) + (pow(env.p[i].px,2) + pow(env.p[i].py,2))/(2.0*env.p[i].m); 
-
-            for (j=i+1; j < env.N; j++)
-            {   
-                env.Etot += env.p[i].q * env.p[j].q / hypot(env.p[i].rx-env.p[j].rx, env.p[i].ry - env.p[j].ry);
-            }
-        }
-
-        for (i=0; i < env.N; i++)
-            printf("%i %f %f %f %f %f %f\n", i, env.p[i].rx, env.p[i].ry, env.p[i].px, env.p[i].py, env.p[i].q, env.Etot);
-        printf("\n");
-
+        drift(&env, env.dt/2);
 
     }
 

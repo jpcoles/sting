@@ -3,6 +3,10 @@
 
 #include <stdio.h>
 
+#define WITH_FG             0
+#define WITH_CENTER_MASS    1
+#define WITH_DARWIN         1
+
 struct delta
 {
     double rx,ry;
@@ -32,6 +36,10 @@ struct env
     float t;            // Current simulation time
     float T;            // Total simulation time
     float Etot;         // Total energy
+
+    float Coulomb_eps2; // Softening for the Coulomb potential
+
+    float c;            // Speed of light
 };
 
 //------------------------------------------------------------------------------

@@ -49,14 +49,14 @@ int ic_4_particle_simple(struct env *env)
     env->p[2].px = 0;
     env->p[2].py = 0;
     env->p[2].m  = 1.0;
-    env->p[2].q  = -1.0;
+    env->p[2].q  =  1.0;
 
     env->p[3].rx = -1;
     env->p[3].ry = -1;
     env->p[3].px = 0;
     env->p[3].py = 0;
     env->p[3].m  = 1.0;
-    env->p[3].q  = -1.0;
+    env->p[3].q  =  1.0;
 
     return 0;
 }
@@ -92,8 +92,11 @@ int ic_random_circular(struct env *env)
         //-----------------------------------------------------------------------------
         // Assign a random charge (-1/+1)
         //-----------------------------------------------------------------------------
-        env->p[i].q = 10.0*((drand48() > 0.5) * 2 - 1);
+        double K = 10. / env->N;
+        env->p[i].q = K; //*((drand48() > 0.5) * 2 - 1);
     }
+
+    env->Coulomb_eps2 = pow(env->Rmax / sqrt(env->N) / 20, 2);
 
     return 0;
 }
