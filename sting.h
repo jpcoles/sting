@@ -19,6 +19,21 @@ struct particle
     double px,py;       // Momentum
     float m;            // Mass
     float q;            // Charge
+
+    double dHdpx, dHdpy;
+};
+
+struct energy
+{
+    double E;
+    double G, K, C, D;
+};
+
+struct units
+{
+    double G,M,L,T,Q;
+    double Myr, kpc, Msun;
+    double year, AU;
 };
 
 struct env
@@ -29,6 +44,7 @@ struct env
     struct delta    *d;
 
     float M;            // Mass of the central object
+    float m;            // Mass of the particles
     float dt;           // Time step
     float Rmin,         // Minimum and maximum disk radii
           Rmax;
@@ -36,10 +52,19 @@ struct env
     float t;            // Current simulation time
     float T;            // Total simulation time
     float Etot;         // Total energy
+    float Jtot;         // Total angular momentum
+    float Mtot;         // Total magnetic field
 
     float Coulomb_eps2; // Softening for the Coulomb potential
+    float grav_eps2;    // Softening for the gravitational potential
 
     float c;            // Speed of light
+
+    float Kd, Kc;       // Coefficients for the darwin and coulomb parts
+                        // of the hamiltonian.
+    float Kr;
+                                
+    struct units units;
 };
 
 //------------------------------------------------------------------------------
