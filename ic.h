@@ -11,6 +11,7 @@ int ic_4_particle_simple(struct env *env);
 int ic_coupled_pairs(struct env *env);
 int ic_tube(struct env *env);
 int ic_2tubes(struct env *env);
+int ic_jet2d(struct env *env);
 
 
 #endif

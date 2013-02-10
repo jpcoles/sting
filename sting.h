@@ -19,6 +19,7 @@ struct particle
     double px,py;       // Momentum
     float m;            // Mass
     float q;            // Charge
+    double e;            // Eccentricity
 
     double dHdpx, dHdpy;
 };
@@ -60,12 +61,23 @@ struct env
 
     float c;            // Speed of light
 
+    float Kd_max, Kc_max;
     float Kd, Kc;       // Coefficients for the darwin and coulomb parts
                         // of the hamiltonian.
     float Kr;
                                 
     struct units units;
 };
+
+typedef int (*ic_func_t)(struct env *env);
+
+struct ic
+{
+    ic_func_t f;
+    char name[256];
+};
+
+
 
 //------------------------------------------------------------------------------
 // Macros

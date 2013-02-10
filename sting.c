@@ -15,9 +15,20 @@
 int echolog=1;
 FILE *logfp;
 
+extern struct ic ics[];
+
 void help()
 {
-    fprintf(stderr, "Usage: sting\n");
+    int i;
+
+    fprintf(stderr, "Usage: sting --ic <IC> -N <Nparticles>\n");
+
+    fprintf(stderr, "where IC is one of\n");
+    for (i=0; ics[i].f != NULL; i++)
+    {
+        fprintf(stderr, "    %s\n", ics[i].name);
+    }
+
     exit(2);
 }
 
@@ -99,6 +110,39 @@ double magnetic_field(struct env *env)
     return J;
 }
 
+void update_eccentricities(struct env *env)
+{
+    int i;
+    double mu = env->M;
+
+    for (i=0; i < env->N; i++)
+    {
+        double vx = env->p[i].px / env->p[i].m;
+        double vy = env->p[i].py / env->p[i].m;
+
+        double v2 = pow(vx,2) + pow(vy,2);
+        double r2 = pow(env->p[i].rx,2) + pow(env->p[i].ry,2);
+        double  r = pow(r2 + env->grav_eps2, 1.5)/r2;
+
+        double rx = env->p[i].rx;
+        double ry = env->p[i].ry;
+
+        double rdotv = rx * vx 
+                     + ry * vy;
+
+        double ex = (v2 * rx - rdotv * vx) / mu - (rx / r);
+        double ey = (v2 * ry - rdotv * vy) / mu - (ry / r);
+
+        env->p[i].e = sqrt(ex*ex + ey*ey);
+    }
+}
+
+void update_prefactors(struct env *env)
+{
+    if (env->Kd < env->Kd_max*1.001) env->Kd = env->Kd_max * (sin(env->t/3 - M_PI/2)+1)/2;
+    if (env->Kc < env->Kc_max*1.001) env->Kc = env->Kc_max * (sin(env->t/3 - M_PI/2)+1)/2;
+}
+
 inline void drift(struct env *env, double dt)
 {
     int i;
@@ -116,19 +160,23 @@ inline void drift(struct env *env, double dt)
 
 int main(int argc, char **argv)
 {
+    int i;
+
     struct env env;
     struct energy E;
+    ic_func_t ic_func = NULL;
 
     set_units(&env);
 
     env.N    = 0;
     env.Rmin = .1;
     env.Rmax = 1.0;
-    env.M    = 1e1;
-    env.T    = 200;
+    env.M    = 0; //1e1;     // Central mass
+    env.T    = 20;
     env.dt   = .01;
     env.Coulomb_eps2 = 0.05;
-    env.grav_eps2 = 0.01;
+    //env.grav_eps2 = 0;
+    env.grav_eps2 = 0.05;
     // env.c = 100;
 
     //--------------------------------------------------------------------------
@@ -140,6 +188,7 @@ int main(int argc, char **argv)
         {"verbose", no_argument, 0, 'v'},
         {"log", optional_argument, 0, 0},
         {"no-CM", no_argument, 0, 0},
+        {"ic", required_argument, 0, 0},
         {0, 0, 0, 0}
     };
 
@@ -167,6 +216,22 @@ int main(int argc, char **argv)
                 {
                     env.M = 0;
                 }
+                else if (!strcmp("ic", long_options[option_index].name))
+                {
+                    ic_func = NULL;
+
+                    for (i=0; ics[i].f != NULL; i++)
+                    {
+                        if (!strcmp(ics[i].name, optarg))
+                            ic_func = ics[i].f;
+                    }
+
+                    if (!ic_func)
+                    {
+                        flog("Error: Unknown initial condition '%s'\n", optarg);
+                        exit(1);
+                    }
+                }
 
 
                 break;
@@ -184,6 +249,11 @@ int main(int argc, char **argv)
         }
     }
 
+    if (ic_func == NULL)
+    {
+        flog("Error: Unspecified initial condition");
+    }
+
     if (logfp == NULL)
     {
         if (open_log("sting.log"))
@@ -192,6 +262,7 @@ int main(int argc, char **argv)
         }
     }
 
+    echolog = 0;
     flog("sting version 0.1\n");
 
     //--------------------------------------------------------------------------
@@ -208,11 +279,16 @@ int main(int argc, char **argv)
     env.d  = malloc(env.N * sizeof(*env.d));  assert(env.d  != NULL);
     //ic_2_particle_simple(&env);
     //ic_4_particle_simple(&env);
-    ic_random_circular(&env);
+    //ic_random_circular(&env);
     //ic_random_elliptic(&env);
     //ic_coupled_pairs(&env);
     //ic_tube(&env);
     //ic_2tubes(&env);
+
+    ic_func(&env);
+
+    //env.Kc /= env.N;
+
 
     //--------------------------------------------------------------------------
     // During the interation loop, we will count the number of steps rather
@@ -221,7 +297,7 @@ int main(int argc, char **argv)
     //--------------------------------------------------------------------------
     int nsteps = ceil(env.T / env.dt);
     int step;
-    int i,j;
+    int j;
 
     fprintf(stderr, "M = %f\n", env.M);
     fprintf(stderr, "eps2 = %f\n", env.Coulomb_eps2);
@@ -233,24 +309,25 @@ int main(int argc, char **argv)
         env.Etot = E.E;
         env.Jtot = ang_mom(&env);
         env.Mtot = magnetic_field(&env);
-
         env.Mtot /= env.Jtot;
+
+        update_eccentricities(&env);
+        //update_prefactors(&env);
+
+        printf("STEP %i %i % 12e % 12e % 12e % 12e % 12e % 12e % 12e % 12e % 12e\n",
+               step, env.N, env.Etot, env.Jtot, env.Mtot, E.G, E.K, E.C, E.D, env.Kc, env.Kd);
 
         for (i=0; i < env.N; i++)
         {
-            printf("%i %i % 12e % 12e % 12e % 12e % 12e % 12e % 12f % 12e % 12e % 12e % 12e % 12e\n", 
-                   step, i, 
-                   env.p[i].rx, env.p[i].ry, env.p[i].px, env.p[i].py, env.p[i].q, env.Etot, env.Jtot, env.Mtot,
-                   E.G, E.K, E.C, E.D);
+            printf("%i % 9.2e % 9.2e % 9.2e % 9.2e % 4.1g % 4.2e\n", 
+                   i, env.p[i].rx, env.p[i].ry, env.p[i].px, env.p[i].py, env.p[i].q, env.p[i].e);
+
+            //fprintf(stderr, "%.20g %.20g\n", env.p[i].dHdpx, env.p[i].dHdpy);
         }
-        printf("\n");
         //fprintf(stderr, "%f\n", env.Etot);
 
         drift(&env, env.dt/2);
-
         darwin_step(&env);
-        //darwin_step(&env);
-
         drift(&env, env.dt/2);
 
     }

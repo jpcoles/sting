@@ -149,6 +149,9 @@ int Hintegrator(struct env *env, struct particle *p, struct delta *d)
             //dHdpx /= 2*p[i].m*p[j].m*c*c;
             //dHdpy /= 2*p[i].m*p[j].m*c*c;
 
+            dHdpx /= 2*p[i].m*p[j].m;
+            dHdpy /= 2*p[i].m*p[j].m;
+
             dHdpx = env->Kd * env->Kc * p[i].q*p[j].q * dHdpx / r;
             dHdpy = env->Kd * env->Kc * p[i].q*p[j].q * dHdpy / r;
 
